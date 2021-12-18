@@ -20,7 +20,7 @@ DerivedData
 *.hmap
 *.ipa
 *.xcuserstate
-
+__MACOSX/
 # Android/IntelliJ
 #
 build/

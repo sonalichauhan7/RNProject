@@ -3,9 +3,10 @@ import {
     FlatList,
     RefreshControl,
     StyleSheet,
-    Text,
+    Text, Image,
     View, ScrollView
 } from 'react-native';
+import ProductList from '../component/ProductList';
 
 
 class HomeScreen extends Component {
@@ -13,7 +14,9 @@ class HomeScreen extends Component {
         super();
         this.state = {
             getResult: null,
-            subCategories: null
+            subCategories: null,
+            refreshing: false,
+            productList: [],
         }
     }
 
@@ -46,33 +49,50 @@ class HomeScreen extends Component {
             .catch(err => console.log(err))
     }
 
+    refreshData = async () => {
+        this.setState({ refreshing: true })
+        await fetch('http://esptiles.imperoserver.in/api/API/Product/DashBoard', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                CategoryId: 56,
+                PageIndex: 2,
+            })
+        })
+            .then(res => res.json())
+            .then(parsedRes => {
+                console.log("from refreshData======", parsedRes.Result.Category[0].SubCategories);
+                const result = parsedRes.Result.Category[0].SubCategories;
+                this.setState({ subCategories: this.state.subCategories.concat(result), refreshing: false })
+            })
+            .catch(err => console.log(err))
+    }
+
     render() {
 
         return (
-            <View style={{ flex: 1 }}>
+            <View style={styles.container}>
                 <FlatList
                     data={this.state.subCategories}
                     renderItem={({ item }) => {
-                        return <View style={{ marginVertical: 20 }}>
+                        return <View style={{ marginBottom: 20 }}>
 
                             <Text style={styles.subCategory}>{item.Name}</Text>
-                            <View style={{ flexDirection: "row" }}>
-                                {item.Product.map(val =>
-                                    <View style={styles.productContainer}>
-                                        <View style={styles.productView}>
-                                            <View style={styles.textView}>
-                                                <Text style={styles.txt}>{val.PriceCode}</Text>
-                                            </View>
-
-                                        </View>
-                                        <Text style={styles.productName}>{val.Name}</Text>
-                                    </View>
-                                )}
+                            <View style={{}}>
+                                <ProductList products={item.Product} />
                             </View>
                         </View>
                     }}
                     keyExtractor={(item, index) => index.toString()}
-
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={this.state.refreshing}
+                            onRefresh={this.refreshData}
+                        />
+                    }
                 />
             </View>
         );
@@ -89,13 +109,11 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "black",
         margin: 10,
-        marginTop: 20
     },
     productContainer: {
-        width: 120, height: 100,
+        width: 120, height: "auto",
     },
     productView: {
-        backgroundColor: "#a9a9a9",
         width: 100, height: 90,
         borderRadius: 10, marginLeft: 10
     },
@@ -104,15 +122,15 @@ const styles = StyleSheet.create({
         width: 50, height: 20,
         marginLeft: 10,
         borderRadius: 5,
-        margin: 5
+        margin: 5,
+        position: "absolute",
+        left: 5
     },
     txt: {
         fontWeight: "bold", color: "#fff", textAlign: "center"
     },
     productName: {
-        width: 100, height: 50, marginBottom: 10,
-        margin: 10,
-        color: "grey"
+        marginLeft: 15,
     }
 });
 
